@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>에고그램 검사</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .btn {
+            @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out;
+        }
+        .btn-secondary {
+            @apply bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out;
+        }
+        .btn-green {
+            @apply bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out;
+        }
+        .btn:disabled, .btn-secondary:disabled {
+            @apply bg-gray-300 cursor-not-allowed hover:bg-gray-300;
+        }
+        .radio-label {
+            @apply ml-2 text-sm sm:text-base;
+        }
+        .question-card {
+            @apply bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-2xl;
+        }
+        /* 모바일 화면에서 버튼 텍스트 크기 조정 */
+        @media (max-width: 640px) {
+            .btn, .btn-secondary, .btn-green {
+                font-size: 0.875rem; /* 14px */
+                padding: 0.75rem 1rem; /* py-3 px-4 */
+            }
+            .radio-label {
+                font-size: 0.875rem; /* 14px */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-2xl">
+
+        <div id="start-screen" class="text-center space-y-8 p-6">
+            <img src="https://placehold.co/150x150/64B5F6/FFFFFF?text=EgoGram" alt="에고그램 검사 로고" class="mx-auto rounded-full shadow-lg">
+            <h1 class="text-4xl sm:text-5xl font-bold text-gray-800">나를 찾아가는 에고그램 검사</h1>
+            <p class="text-lg text-gray-600">20년 경력 전문가의 통찰을 담아 당신의 성격 유형을 분석해 드립니다.</p>
+            <button id="start-btn" class="btn text-xl">검사 시작하기</button>
+        </div>
+
+        <div id="info-screen" class="hidden question-card space-y-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800">개인 정보 입력 (선택)</h2>
+            <p class="text-gray-600 text-center">검사 결과에 이름을 표시하고 싶다면 입력해주세요. 원치 않으시면 바로 '다음'을 눌러주세요.</p>
+            <div>
+                <label for="name-input" class="block text-lg font-medium text-gray-700 mb-1">이름:</label>
+                <input type="text" id="name-input" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="이름을 입력하세요 (예: 홍길동)">
+            </div>
+            <div class="flex justify-between">
+                <button id="skip-info-btn" class="btn-secondary">건너뛰기</button>
+                <button id="submit-info-btn" class="btn">다음</button>
+            </div>
+        </div>
+
+        <div id="guide-screen" class="hidden question-card space-y-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800">검사 안내</h2>
+            <p class="text-gray-700 leading-relaxed">
+                본 검사는 총 50문항으로 이루어져 있으며, 각 문항을 읽고 자신에게 얼마나 해당되는지를 솔직하게 선택해주시면 됩니다.
+            </p>
+            <ul class="list-disc list-inside text-gray-700 space-y-1">
+                <li><strong>응답 선택:</strong> 각 문항에 대해 5가지 응답 중 하나를 선택합니다.
+                    <ul class="list-disc list-inside ml-6 mt-1 text-sm text-gray-600">
+                        <li>언제나 그렇다 (매우 긍정)</li>
+                        <li>자주 그렇다 (약간 긍정)</li>
+                        <li>그저 그렇다 (보통)</li>
+                        <li>가끔 그렇다 (약간 부정)</li>
+                        <li>거의 그렇지 않다 (매우 부정)</li>
+                    </ul>
+                </li>
+                <li><strong>문항 이동:</strong> '다음 문항' 버튼으로 다음 질문으로 이동하며, '이전 문항' 버튼으로 답변을 수정할 수 있습니다.</li>
+                <li><strong>소요 시간:</strong> 약 10~15분 정도 소요됩니다.</li>
+                <li><strong>결과 확인:</strong> 모든 문항에 응답하시면 분석된 에고그램 프로파일과 해석을 확인할 수 있습니다.</li>
+            </ul>
+            <p class="text-sm text-gray-500 text-center">모든 문항에 빠짐없이 응답해야 정확한 결과를 얻을 수 있습니다.</p>
+            <button id="start-test-btn" class="btn w-full">안내 확인, 검사 시작</button>
+        </div>
+
+        <div id="test-screen" class="hidden question-card space-y-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">검사 진행</h2>
+                <p id="progress-text" class="text-sm text-gray-600">문항 1 / 50</p>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            
+            <div id="question-container" class="space-y-4">
+                <p id="question-text" class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 min-h-[3em]"></p>
+                <div id="options-container" class="space-y-3">
+                    </div>
+            </div>
+            <div id="validation-message" class="text-red-500 text-sm hidden mt-2">응답을 선택해주세요.</div>
+            <div class="flex justify-between mt-6"> {/* 이전/다음 버튼 정렬 변경 */}
+                <button id="prev-question-btn" class="btn-secondary">이전 문항</button>
+                <button id="next-question-btn" class="btn">다음 문항</button>
+            </div>
+        </div>
+
+        <div id="analyzing-screen" class="hidden text-center space-y-6 p-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">결과 분석 중...</h2>
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto"></div>
+            <p class="text-gray-600">잠시만 기다려주세요. 당신의 에고그램을 분석하고 있습니다.</p>
+        </div>
+
+        <div id="result-screen" class="hidden question-card space-y-6">
+            <h2 id="result-title" class="text-2xl sm:text-3xl font-bold text-center text-gray-800">에고그램 검사 결과</h2>
+            <p class="text-center text-gray-600"><span id="user-name-display"></span>님의 에고그램 프로파일입니다.</p>
+            <div>
+                <canvas id="egogram-chart"></canvas>
+            </div>
+            <div id="score-summary" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-center">
+                </div>
+            <button id="show-interpretation-btn" class="btn w-full">심층 해석 보기</button>
+        </div>
+        
+        <div id="interpretation-screen" class="hidden question-card space-y-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800">결과 해석 및 조언</h2>
+            <div id="interpretation-text" class="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                </div>
+            <div class="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-4 mt-4">
+                <button id="save-results-btn" class="btn-green w-full sm:w-auto">결과 저장하기</button>
+                <button id="restart-btn" class="btn-secondary w-full sm:w-auto">검사 다시하기</button>
+                <button id="end-btn" class="btn w-full sm:w-auto">검사 종료</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="hidden text-center space-y-6 p-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">검사가 종료되었습니다.</h2>
+            <p class="text-gray-600">자신을 이해하는 데 도움이 되었기를 바랍니다.</p>
+            <button id="restart-from-end-btn" class="btn">새로운 검사 시작하기</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Google Apps Script 웹 앱 URL ---
+        // 제공해주신 URL로 업데이트
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqola46DU_TMIvQTTZ7KTGTSfnSVGMriGXd8ZaqpLr4g_dVtfmr-FU4zajDd-QHN25zg/exec"; 
+
+        // --- DOM 요소 선택 ---
+        const screens = {
+            start: document.getElementById('start-screen'),
+            info: document.getElementById('info-screen'),
+            guide: document.getElementById('guide-screen'),
+            test: document.getElementById('test-screen'),
+            analyzing: document.getElementById('analyzing-screen'),
+            result: document.getElementById('result-screen'),
+            interpretation: document.getElementById('interpretation-screen'),
+            end: document.getElementById('end-screen'),
+        };
+
+        const buttons = {
+            start: document.getElementById('start-btn'),
+            skipInfo: document.getElementById('skip-info-btn'),
+            submitInfo: document.getElementById('submit-info-btn'),
+            startTest: document.getElementById('start-test-btn'),
+            prevQuestion: document.getElementById('prev-question-btn'), // 이전 문항 버튼 추가
+            nextQuestion: document.getElementById('next-question-btn'),
+            showInterpretation: document.getElementById('show-interpretation-btn'),
+            saveResults: document.getElementById('save-results-btn'),
+            restart: document.getElementById('restart-btn'),
+            end: document.getElementById('end-btn'),
+            restartFromEnd: document.getElementById('restart-from-end-btn'),
+        };
+
+        const inputs = {
+            name: document.getElementById('name-input'),
+        };
+
+        const displayElements = {
+            progressText: document.getElementById('progress-text'),
+            progressBar: document.getElementById('progress-bar'),
+            questionText: document.getElementById('question-text'),
+            optionsContainer: document.getElementById('options-container'),
+            validationMessage: document.getElementById('validation-message'),
+            resultTitle: document.getElementById('result-title'),
+            userNameDisplay: document.getElementById('user-name-display'),
+            scoreSummary: document.getElementById('score-summary'),
+            interpretationText: document.getElementById('interpretation-text'),
+        };
+        
+        let egogramChartInstance = null;
+
+        // --- 검사 문항 데이터 ---
+        const questions = [
+            {text:"다른 사람을 헐뜯기보다는 칭찬을 한다.", category:"NP"},
+            {text:"사태의 흑백을 명백히 가리지 않으면 마음이 편치 않다.", category:"CP"},
+            {text:"무슨 일을 할 때 좀처럼 결심을 할 수 없다.", category:"AC"},
+            {text:"나는 명랑하게 행동하고 장난을 잘 친다.", category:"FC"},
+            {text:"말이나 행동을 냉정하고 침착하게 한다.", category:"A"},
+            {text:"성미가 급하고 화를 잘 낸다.", category:"CP"},
+            {text:"인정(人情)을 중요시한다.", category:"NP"},
+            {text:"호기심이 강하고 창의적인 착상을 잘 한다.", category:"FC"},
+            {text:"사물의 정돈을 잘 한다.", category:"A"},
+            {text:"농담을 하거나 익살부리기를 잘 한다.", category:"FC"},
+            {text:"의존심이 강하다.", category:"AC"},
+            {text:"상대의 이야기를 경청하고 공감하기를 잘 한다.", category:"NP"},
+            {text:"상대의 부정(不正)이나 실패에 대해 엄격하다.", category:"CP"},
+            {text:"어려움에 처해 있는 사람을 보면 도와주고 싶어한다.", category:"NP"},
+            {text:"숫자나 자료(data)를 사용해서 이야기를 한다.", category:"A"},
+            {text:"제멋대로 말하거나 행동을 한다.", category:"FC"},
+            {text:"후회(後悔)의 생각에 사로잡힌다.", category:"AC"},
+            {text:"좌절감을 맛보는 경우가 많다.", category:"AC"},
+            {text:"6하 원칙(언제, 어디서, 누가 …)에 따라 사리를 따지거나 설명한다.", category:"A"},
+            {text:"일을 능률적으로 수행한다.", category:"A"},
+            {text:"요령이 없고 주저주저한다(머뭇거린다).", category:"AC"},
+            {text:"무슨 일이나 사실에 입각해서 객관적으로 판단한다.", category:"A"},
+            {text:"다른 사람으로부터 부탁을 받으면 거절하지 못한다.", category:"NP"},
+            {text:"주변 사람에게 긴장감을 준다.", category:"CP"},
+            {text:"봉사활동에 즐겨 참여한다.", category:"NP"},
+            {text:"배려나 동정심이 강하다.", category:"NP"},
+            {text:"신이 나면 도가 지나쳐서 실수를 한다.", category:"FC"},
+            {text:"타인의 반대에 부딪치면 자신의 생각을 바꾸고 만다.", category:"AC"},
+            {text:"타인의 장점보다 결점이 눈에 띈다.", category:"CP"},
+            {text:"다른 사람에 대해 온화하고 관대하다", category:"NP"},
+            {text:"상대방의 말을 가로막고 자신의 생각으로 바꾸고 만다.", category:"CP"},
+            {text:"오락이나 술․음식물 등을 만족할 때까지 취한다.", category:"FC"},
+            {text:"계획을 세우고 나서 실행한다.", category:"A"},
+            {text:"완고하고 융통성이 전혀 없다.", category:"CP"},
+            {text:"타인의 안색을 살핀다.", category:"AC"},
+            {text:"스포츠나 노래를 즐길 수 있다.", category:"FC"},
+            {text:"현상을 관찰․분석하고 합리적으로 의사결정을 한다.", category:"A"},
+            {text:"욕심나는 것을 가지지 않고는 못 배긴다.", category:"FC"},
+            {text:"열등감이 심하고 자신의 감정을 참고 억제한다.", category:"AC"},
+            {text:"상냥하고 부드러우며 애정이 깃들어 있는 대화나 태도를 취한다.", category:"NP"},
+            {text:"일을 빨리 처리하는 것이 장기(長技)이다.", category:"A"},
+            {text:"하고 싶은 말을 할 수가 없다.", category:"AC"},
+            {text:"상대를 바보취급하거나 멸시한다.", category:"CP"},
+            {text:"노는 분위기(놀이)에 저항없이 어울린다.", category:"FC"},
+            {text:"눈물에 약하다.", category:"NP"},
+            {text:"대화에서 감정적으로 되지 않고 이성적으로 풀어간다.", category:"A"},
+            {text:"부모나 상사가 시키는 대로 한다.", category:"AC"},
+            {text:"당연히 …해야 한다', '…하지 않으면 안된다'는 식의 말투를 잘 쓴다.", category:"CP"},
+            {text:"와 - 멋있다 !', '굉장하군', '아하 !' 등의 감탄사를 잘 쓴다.", category:"FC"},
+            {text:"매사에 비판적이다.", category:"CP"}
+        ];
+        const TOTAL_QUESTIONS = questions.length;
+
+        const responseOptions = [
+            { text: "언제나 그렇다 (매우 긍정)", score: 5 },
+            { text: "자주 그렇다 (약간 긍정)", score: 4 },
+            { text: "그저 그렇다 (보통)", score: 3 },
+            { text: "가끔 그렇다 (약간 부정)", score: 2 },
+            { text: "거의 그렇지 않다 (매우 부정)", score: 1 },
+        ];
+
+        // --- 상태 변수 ---
+        let currentQuestionIndex = 0;
+        let userAnswers = []; // 각 문항의 점수를 저장
+        let userName = "";
+        let scores = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 };
+        let questionsPerCategory = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 };
+
+        // --- 화면 전환 함수 ---
+        function showScreen(screenId) {
+            Object.values(screens).forEach(screen => {
+                if(screen) screen.classList.add('hidden');
+            });
+            if (screens[screenId]) { 
+                screens[screenId].classList.remove('hidden');
+            }
+            window.scrollTo(0, 0); 
+        }
+
+        // --- 검사 로직 함수 ---
+        function initializeTestState() {
+            questionsPerCategory = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 }; 
+            questions.forEach(q => {
+                if (q && q.category && questionsPerCategory.hasOwnProperty(q.category)) {
+                    questionsPerCategory[q.category]++;
+                } else {
+                    console.warn(`알 수 없거나 잘못된 카테고리: ${q ? q.category : 'undefined'} (문항: "${q ? q.text : 'undefined'}")`);
+                }
+            });
+            console.log("문항 수 (카테고리별):", questionsPerCategory); 
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                const question = questions[currentQuestionIndex];
+                if(!question) { 
+                    console.error("로드할 질문이 없습니다. currentQuestionIndex:", currentQuestionIndex);
+                    showAnalyzingScreen(); 
+                    return;
+                }
+
+                if(displayElements.questionText) displayElements.questionText.textContent = question.text;
+                if(displayElements.optionsContainer) displayElements.optionsContainer.innerHTML = ''; 
+
+                const previousAnswer = userAnswers[currentQuestionIndex]; // 현재 문항에 대한 이전 답변 가져오기
+
+                responseOptions.forEach((option, index) => {
+                    const div = document.createElement('div');
+                    div.classList.add('flex', 'items-center', 'p-3', 'border', 'border-gray-200', 'rounded-lg', 'hover:bg-gray-100', 'cursor-pointer', 'transition-colors');
+                    
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = 'response';
+                    input.value = option.score;
+                    input.id = `option-${index}`;
+                    input.classList.add('h-5', 'w-5', 'text-blue-600', 'border-gray-300', 'focus:ring-blue-500');
+                    
+                    if (previousAnswer !== undefined && option.score === previousAnswer) {
+                        input.checked = true; // 이전 답변이 있으면 해당 라디오 버튼 선택
+                    }
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `option-${index}`;
+                    label.textContent = option.text;
+                    label.classList.add('radio-label', 'text-gray-700', 'w-full', 'cursor-pointer');
+
+                    div.appendChild(input);
+                    div.appendChild(label);
+                    div.addEventListener('click', () => {
+                        input.checked = true;
+                    });
+                    if(displayElements.optionsContainer) displayElements.optionsContainer.appendChild(div);
+                });
+
+                if(displayElements.progressText) displayElements.progressText.textContent = `문항 ${currentQuestionIndex + 1} / ${TOTAL_QUESTIONS}`;
+                if(displayElements.progressBar) displayElements.progressBar.style.width = `${((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%`;
+                if(displayElements.validationMessage) displayElements.validationMessage.classList.add('hidden');
+
+                // 이전 문항 버튼 활성화/비활성화
+                if (buttons.prevQuestion) {
+                    buttons.prevQuestion.disabled = currentQuestionIndex === 0;
+                }
+                // 다음 문항 버튼 텍스트 변경 (마지막 문항일 경우)
+                if (buttons.nextQuestion) {
+                    buttons.nextQuestion.textContent = (currentQuestionIndex === TOTAL_QUESTIONS - 1) ? "결과 보기" : "다음 문항";
+                }
+
+            } else {
+                showAnalyzingScreen();
+            }
+        }
+        
+        function handlePrevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function handleNextQuestion() {
+            const selectedOption = document.querySelector('input[name="response"]:checked');
+            if (!selectedOption) {
+                if(displayElements.validationMessage) displayElements.validationMessage.classList.remove('hidden');
+                return;
+            }
+            if(displayElements.validationMessage) displayElements.validationMessage.classList.add('hidden');
+            
+            userAnswers[currentQuestionIndex] = parseInt(selectedOption.value); // 현재 문항의 답변 저장
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+        
+        function showAnalyzingScreen() {
+            showScreen('analyzing');
+            setTimeout(() => {
+                calculateAndDisplayResults();
+            }, 2000); 
+        }
+
+        function calculateAndDisplayResults() {
+            scores = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 }; 
+            questions.forEach((question, index) => {
+                if (question && question.category && userAnswers[index] !== undefined && scores.hasOwnProperty(question.category)) { 
+                    scores[question.category] += userAnswers[index];
+                }
+            });
+            
+            const maxScorePerCategory = {};
+             Object.keys(scores).forEach(cat => {
+                maxScorePerCategory[cat] = (questionsPerCategory[cat] || 1) * 5; 
+            });
+
+            if(displayElements.resultTitle) displayElements.resultTitle.textContent = `${userName || "당신"}의 에고그램 검사 결과`;
+            
+            if (displayElements.userNameDisplay) {
+                displayElements.userNameDisplay.textContent = userName || "당신";
+            }
+
+            if(displayElements.scoreSummary) displayElements.scoreSummary.innerHTML = '';
+            const egoStates = {
+                CP: { name: "비판적 부모 (CP)", color: "bg-red-500", keyword: "원칙, 책임감" },
+                NP: { name: "양육적 부모 (NP)", color: "bg-green-500", keyword: "공감, 배려" },
+                A: { name: "성인 (A)", color: "bg-blue-500", keyword: "합리, 분석" },
+                FC: { name: "자유로운 어린이 (FC)", color: "bg-yellow-500", keyword: "창의, 자율" },
+                AC: { name: "순응하는 어린이 (AC)", color: "bg-purple-500", keyword: "협조, 인내" }
+            };
+
+            Object.keys(scores).forEach(key => {
+                if (!egoStates[key]) return; 
+                const div = document.createElement('div');
+                div.classList.add('p-3', 'rounded-lg', 'shadow', 'text-white', egoStates[key].color);
+                const nameEl = document.createElement('p');
+                nameEl.classList.add('font-semibold', 'text-sm', 'sm:text-base');
+                nameEl.textContent = egoStates[key].name.split(' (')[0];
+                const scoreEl = document.createElement('p');
+                scoreEl.classList.add('text-2xl', 'sm:text-3xl', 'font-bold');
+                scoreEl.textContent = scores[key];
+                const keywordEl = document.createElement('p');
+                keywordEl.classList.add('text-xs', 'sm:text-sm', 'opacity-90');
+                keywordEl.textContent = egoStates[key].keyword;
+
+                div.appendChild(nameEl);
+                div.appendChild(scoreEl);
+                div.appendChild(keywordEl);
+                if(displayElements.scoreSummary) displayElements.scoreSummary.appendChild(div);
+            });
+            
+            const chartCanvas = document.getElementById('egogram-chart');
+            if (chartCanvas) {
+                const chartCtx = chartCanvas.getContext('2d');
+                if (egogramChartInstance) {
+                    egogramChartInstance.destroy(); 
+                }
+                egogramChartInstance = new Chart(chartCtx, {
+                    type: 'bar', 
+                    data: {
+                        labels: ['CP', 'NP', 'A', 'FC', 'AC'],
+                        datasets: [{
+                            label: '에고그램 점수',
+                            data: [scores.CP, scores.NP, scores.A, scores.FC, scores.AC],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(153, 102, 255, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: Math.max(...Object.values(maxScorePerCategory), 25) 
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false 
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y + '점';
+                                        }
+                                        const egoStateFullName = (egoStates && egoStates[context.label]) ? egoStates[context.label].name : context.label;
+                                        return `${egoStateFullName}: ${context.parsed.y}점`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            showScreen('result');
+        }
+
+        function sendDataToGoogleSheet(data) {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+                console.warn("Google Apps Script URL이 설정되지 않았습니다. 데이터가 전송되지 않습니다. URL을 확인하고 실제 배포된 웹 앱 URL로 교체해주세요.");
+                return;
+            }
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                cache: 'no-cache',
+                redirect: 'follow',
+                body: JSON.stringify(data) 
+            })
+            .then(response => {
+                if (response && response.ok) { 
+                    return response.json(); 
+                }
+                console.log('데이터 전송 시도 완료 (응답 확인 불가 또는 실패). Google Sheet 또는 Apps Script 로그에서 확인하세요.');
+                if(response && !response.ok) { 
+                    console.warn('데이터 전송 응답이 성공적이지 않습니다. 상태:', response.status);
+                }
+            })
+            .then(result => {
+                if(result) { 
+                    console.log('Google Sheet 저장 결과:', result);
+                }
+            })
+            .catch((error) => {
+                console.error('Google Sheet로 데이터 전송 중 오류 발생:', error);
+            });
+        }
+
+
+        function generateInterpretation() {
+            let interpretation = `<p class="mb-4"><strong>${userName || "당신"}님의 에고그램 프로파일 분석:</strong></p>`;
+            
+            const egoStateDetails = {
+                CP: { name: "비판적 부모 (Critical Parent)", desc: "자신의 가치관, 신념, 양심, 책임감, 비판적 사고 등을 나타냅니다. 이 점수가 높을수록 원칙을 중시하고 책임감이 강하며, 때로는 비판적이거나 완고할 수 있습니다." },
+                NP: { name: "양육적 부모 (Nurturing Parent)", desc: "타인에 대한 이해, 공감, 배려, 격려, 보호 등 따뜻한 마음을 나타냅니다. 이 점수가 높을수록 타인에게 관대하고 도움을 주려 하지만, 과도하면 간섭이 될 수 있습니다." },
+                A: { name: "성인 (Adult)", desc: "현실을 객관적으로 파악하고, 이성적이고 합리적으로 판단하며, 정보를 분석하고 문제를 해결하는 능력을 나타냅니다. 이 점수가 높을수록 침착하고 논리적이지만, 감정적인 교류가 부족해 보일 수 있습니다." },
+                FC: { name: "자유로운 어린이 (Free Child)", desc: "본능적인 감정, 창의성, 호기심, 유머, 자발성 등을 나타냅니다. 이 점수가 높을수록 자유분방하고 창의적이지만, 충동적이거나 자기중심적일 수 있습니다." },
+                AC: { name: "순응하는 어린이 (Adapted Child)", desc: "타인의 기대에 부응하려는 노력, 협조성, 인내심, 때로는 불안이나 죄책감 등을 나타냅니다. 이 점수가 높을수록 협조적이고 신중하지만, 자기주장이 약하거나 수동적일 수 있습니다." },
+            };
+
+            Object.keys(scores).forEach(key => {
+                 if (!egoStateDetails[key]) return; 
+                interpretation += `<div class="mb-3 p-3 bg-white rounded shadow-sm">
+                                    <p class="font-semibold text-indigo-700">${egoStateDetails[key].name}: ${scores[key]}점</p>
+                                    <p class="text-sm">${egoStateDetails[key].desc}</p>
+                                 </div>`;
+            });
+
+            interpretation += `<hr class="my-4"> <p class="mb-2 font-semibold">종합적인 조언:</p>`;
+            
+            const cpCount = questionsPerCategory.CP || 10; 
+            const acCount = questionsPerCategory.AC || 10;
+            const fcCount = questionsPerCategory.FC || 10;
+            const aCount = questionsPerCategory.A || 10;
+
+            const cpThresholdHigh = cpCount * 3.5; 
+            const acThresholdLow = acCount * 2.5;
+            const fcThresholdHigh = fcCount * 3.5;
+            const aThresholdLow = aCount * 2.5;
+
+
+            if (scores.CP > cpThresholdHigh && scores.AC < acThresholdLow) {
+                interpretation += `<p class="mb-2 text-sm">CP(비판적 부모) 점수가 높고 AC(순응하는 어린이) 점수가 낮은 경향은 강한 책임감과 주도성을 가지지만, 때로는 타인의 시선에 덜 민감하여 독단적으로 보일 수 있음을 시사합니다. NP(양육적 부모)의 에너지를 활용하여 타인과 공감적 소통을 연습하고, A(성인)의 합리성을 통해 상황을 객관적으로 판단하는 균형을 찾는 것이 도움이 될 수 있습니다.</p>`;
+            } else if (scores.FC > fcThresholdHigh && scores.A < aThresholdLow) {
+                 interpretation += `<p class="mb-2 text-sm">FC(자유로운 어린이) 점수가 높고 A(성인) 점수가 낮은 경향은 창의적이고 활기차지만, 때로는 즉흥적이거나 현실적인 판단이 부족할 수 있음을 나타냅니다. A(성인)의 계획성과 분석력을 키우고, NP(양육적 부모)의 배려심을 더하여 주변 사람들과 조화를 이루는 것이 좋습니다.</p>`;
+            } else {
+                interpretation += `<p class="mb-2 text-sm">각 자아 상태의 점수를 균형 있게 발전시키는 것이 중요합니다. 높은 점수의 자아 상태는 당신의 강점일 수 있으며, 낮은 점수의 자아 상태는 발전 가능성이 있는 부분입니다. 자신을 이해하고 긍정적인 변화를 만들어나가시길 바랍니다.</p>`;
+            }
+            
+            interpretation += `<p class="mt-4 text-xs text-gray-500">* 이 해석은 일반적인 경향을 나타내며, 개인의 구체적인 상황과 경험에 따라 다를 수 있습니다. 더 깊이 있는 이해를 원하시면 전문가와 상담하는 것을 권장합니다.</p>`;
+            
+            if(displayElements.interpretationText) displayElements.interpretationText.innerHTML = interpretation;
+            
+            const resultDataForSheet = {
+                name: userName || "익명", 
+                cp: scores.CP,
+                np: scores.NP,
+                a: scores.A,
+                fc: scores.FC,
+                ac: scores.AC
+            };
+            sendDataToGoogleSheet(resultDataForSheet);
+
+            showScreen('interpretation');
+        }
+
+        function saveResultsToFile() {
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            const fileNameBase = userName ? userName.replace(/\s+/g, '_') : '사용자';
+            const fileName = `${fileNameBase}_에고그램결과_${timestamp}.txt`;
+
+            let fileContent = `에고그램 검사 결과\n`;
+            fileContent += `-------------------------------------\n`;
+            fileContent += `이름: ${userName || '입력 안 함'}\n`;
+            fileContent += `검사일시: ${now.toLocaleString('ko-KR')}\n`;
+            fileContent += `-------------------------------------\n`;
+            fileContent += `CP (비판적 부모): ${scores.CP}점\n`;
+            fileContent += `NP (양육적 부모): ${scores.NP}점\n`;
+            fileContent += `A (성인): ${scores.A}점\n`;
+            fileContent += `FC (자유로운 어린이): ${scores.FC}점\n`;
+            fileContent += `AC (순응하는 어린이): ${scores.AC}점\n`;
+            fileContent += `-------------------------------------\n\n`;
+            
+            if (displayElements.interpretationText && displayElements.interpretationText.innerHTML) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = displayElements.interpretationText.innerHTML;
+                let interpretationOnlyText = "";
+                tempDiv.querySelectorAll('p, div > p, hr').forEach(el => {
+                    if (el.tagName === 'HR') {
+                        interpretationOnlyText += "\n-------------------------------------\n";
+                    } else {
+                        interpretationOnlyText += el.textContent.trim() + "\n";
+                    }
+                });
+                interpretationOnlyText = interpretationOnlyText.replace(`${userName || "당신"}님의 에고그램 프로파일 분석:`, "심층 해석:").replace(/\n\n+/g, '\n\n');
+                fileContent += `\n【 심층 해석 및 조언 】\n${interpretationOnlyText.trim()}`;
+            }
+
+            const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        function resetTest() {
+            currentQuestionIndex = 0;
+            userAnswers = []; // 답변 기록 초기화
+            scores = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 };
+            if (egogramChartInstance) {
+                egogramChartInstance.destroy();
+                egogramChartInstance = null;
+            }
+            if (inputs.name) { 
+                inputs.name.value = ""; 
+            }
+            userName = ""; 
+            showScreen('start');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (buttons.start) buttons.start.addEventListener('click', () => showScreen('info'));
+            
+            if (buttons.skipInfo) buttons.skipInfo.addEventListener('click', () => {
+                userName = "";
+                if (inputs.name) inputs.name.value = "";
+                showScreen('guide');
+            });
+
+            if (buttons.submitInfo) buttons.submitInfo.addEventListener('click', () => {
+                if (inputs.name) userName = inputs.name.value.trim();
+                showScreen('guide');
+            });
+
+            if (buttons.startTest) buttons.startTest.addEventListener('click', () => {
+                currentQuestionIndex = 0; 
+                userAnswers = new Array(TOTAL_QUESTIONS).fill(undefined); // 답변 배열 초기화
+                initializeTestState(); 
+                loadQuestion();
+                showScreen('test');
+            });
+            
+            if (buttons.prevQuestion) buttons.prevQuestion.addEventListener('click', handlePrevQuestion); // 이전 문항 버튼 이벤트
+            if (buttons.nextQuestion) buttons.nextQuestion.addEventListener('click', handleNextQuestion);
+            if (buttons.showInterpretation) buttons.showInterpretation.addEventListener('click', generateInterpretation);
+            if (buttons.saveResults) buttons.saveResults.addEventListener('click', saveResultsToFile);
+            
+            if (buttons.restart) buttons.restart.addEventListener('click', resetTest);
+            if (buttons.restartFromEnd) buttons.restartFromEnd.addEventListener('click', resetTest);
+
+            if (buttons.end) buttons.end.addEventListener('click', () => {
+                showScreen('end');
+            });
+        
+            initializeTestState(); 
+            if (TOTAL_QUESTIONS === 0) {
+                 console.error("질문 데이터가 로드되지 않았습니다! 'questions' 배열을 확인해주세요.");
+                 const errorMsg = document.createElement('p');
+                 errorMsg.textContent = "오류: 검사 문항을 불러오는 데 실패했습니다. 페이지를 새로고침하거나 관리자에게 문의하세요.";
+                 errorMsg.classList.add('text-red-600', 'font-bold', 'text-center', 'p-4');
+                 if (screens.start) { 
+                    screens.start.innerHTML = ''; 
+                    screens.start.appendChild(errorMsg);
+                 }
+            } else if (TOTAL_QUESTIONS > 0 && TOTAL_QUESTIONS === 50) { 
+                console.log(`총 ${TOTAL_QUESTIONS}개의 문항으로 검사가 준비되었습니다.`);
+            }
+            else if (TOTAL_QUESTIONS > 0 && TOTAL_QUESTIONS < 50) { 
+                console.warn(`현재 ${TOTAL_QUESTIONS}개의 문항만 설정되어 있습니다. 50문항이 아닐 경우 결과가 정확하지 않을 수 있습니다.`);
+                const warningMsg = document.createElement('p');
+                warningMsg.textContent = `참고: 현재 ${TOTAL_QUESTIONS}개의 문항으로 검사가 진행됩니다. (50문항 권장)`;
+                warningMsg.classList.add('text-sm', 'text-orange-600', 'mt-2', 'font-semibold');
+                if (screens.start && buttons.start) { 
+                     screens.start.insertBefore(warningMsg, buttons.start); 
+                }
+            }
+             else if (TOTAL_QUESTIONS > 50) {
+                console.warn(`현재 ${TOTAL_QUESTIONS}개의 문항이 설정되어 있습니다. 50문항을 초과했습니다.`);
+                 const warningMsg = document.createElement('p');
+                warningMsg.textContent = `주의: 현재 ${TOTAL_QUESTIONS}개의 문항이 설정되어 50문항을 초과했습니다. 처음 50문항으로 검사가 진행됩니다.`;
+                warningMsg.classList.add('text-sm', 'text-orange-600', 'mt-2', 'font-semibold');
+                if (screens.start && buttons.start) {
+                     screens.start.insertBefore(warningMsg, buttons.start);
+                }
+            }
+            showScreen('start');
+        });
+
+    </script>
+</body>
+</html>
