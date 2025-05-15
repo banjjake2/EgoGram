@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko"> 
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,7 +103,7 @@
                     </div>
             </div>
             <div id="validation-message" class="text-red-500 text-sm hidden mt-2">응답을 선택해주세요.</div>
-            <div class="flex justify-between mt-6"> {/* 이전/다음 버튼 정렬 변경 */}
+            <div class="flex justify-between mt-6">
                 <button id="prev-question-btn" class="btn-secondary">이전 문항</button>
                 <button id="next-question-btn" class="btn">다음 문항</button>
             </div>
@@ -146,8 +146,8 @@
 
     <script>
         // --- Google Apps Script 웹 앱 URL ---
-        // 제공해주신 URL로 업데이트
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqola46DU_TMIvQTTZ7KTGTSfnSVGMriGXd8ZaqpLr4g_dVtfmr-FU4zajDd-QHN25zg/exec"; 
+        // 제공해주신 새로운 URL로 업데이트 완료
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJ7saWhrKJWybMkrDGbouSHT4TJG03kK90zZ2W5jCsifiV2RR6TxfqwAdAPAqLT79TGg/exec"; 
 
         // --- DOM 요소 선택 ---
         const screens = {
@@ -166,7 +166,7 @@
             skipInfo: document.getElementById('skip-info-btn'),
             submitInfo: document.getElementById('submit-info-btn'),
             startTest: document.getElementById('start-test-btn'),
-            prevQuestion: document.getElementById('prev-question-btn'), // 이전 문항 버튼 추가
+            prevQuestion: document.getElementById('prev-question-btn'), 
             nextQuestion: document.getElementById('next-question-btn'),
             showInterpretation: document.getElementById('show-interpretation-btn'),
             saveResults: document.getElementById('save-results-btn'),
@@ -258,7 +258,7 @@
 
         // --- 상태 변수 ---
         let currentQuestionIndex = 0;
-        let userAnswers = []; // 각 문항의 점수를 저장
+        let userAnswers = []; 
         let userName = "";
         let scores = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 };
         let questionsPerCategory = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 };
@@ -299,7 +299,7 @@
                 if(displayElements.questionText) displayElements.questionText.textContent = question.text;
                 if(displayElements.optionsContainer) displayElements.optionsContainer.innerHTML = ''; 
 
-                const previousAnswer = userAnswers[currentQuestionIndex]; // 현재 문항에 대한 이전 답변 가져오기
+                const previousAnswer = userAnswers[currentQuestionIndex]; 
 
                 responseOptions.forEach((option, index) => {
                     const div = document.createElement('div');
@@ -313,7 +313,7 @@
                     input.classList.add('h-5', 'w-5', 'text-blue-600', 'border-gray-300', 'focus:ring-blue-500');
                     
                     if (previousAnswer !== undefined && option.score === previousAnswer) {
-                        input.checked = true; // 이전 답변이 있으면 해당 라디오 버튼 선택
+                        input.checked = true; 
                     }
 
                     const label = document.createElement('label');
@@ -333,11 +333,9 @@
                 if(displayElements.progressBar) displayElements.progressBar.style.width = `${((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%`;
                 if(displayElements.validationMessage) displayElements.validationMessage.classList.add('hidden');
 
-                // 이전 문항 버튼 활성화/비활성화
                 if (buttons.prevQuestion) {
                     buttons.prevQuestion.disabled = currentQuestionIndex === 0;
                 }
-                // 다음 문항 버튼 텍스트 변경 (마지막 문항일 경우)
                 if (buttons.nextQuestion) {
                     buttons.nextQuestion.textContent = (currentQuestionIndex === TOTAL_QUESTIONS - 1) ? "결과 보기" : "다음 문항";
                 }
@@ -362,7 +360,7 @@
             }
             if(displayElements.validationMessage) displayElements.validationMessage.classList.add('hidden');
             
-            userAnswers[currentQuestionIndex] = parseInt(selectedOption.value); // 현재 문항의 답변 저장
+            userAnswers[currentQuestionIndex] = parseInt(selectedOption.value); 
             currentQuestionIndex++;
             loadQuestion();
         }
@@ -488,7 +486,7 @@
         }
 
         function sendDataToGoogleSheet(data) {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") { 
                 console.warn("Google Apps Script URL이 설정되지 않았습니다. 데이터가 전송되지 않습니다. URL을 확인하고 실제 배포된 웹 앱 URL로 교체해주세요.");
                 return;
             }
@@ -501,20 +499,16 @@
             })
             .then(response => {
                 if (response && response.ok) { 
-                    return response.json(); 
+                    return response.json().catch(() => ({ status: "success", message: "데이터 전송 성공 (응답 파싱 불가)" })); 
                 }
-                console.log('데이터 전송 시도 완료 (응답 확인 불가 또는 실패). Google Sheet 또는 Apps Script 로그에서 확인하세요.');
-                if(response && !response.ok) { 
-                    console.warn('데이터 전송 응답이 성공적이지 않습니다. 상태:', response.status);
-                }
+                console.warn('데이터 전송 응답이 성공적이지 않습니다. 상태:', response ? response.status : '응답 없음');
+                return { status: "error", message: `데이터 전송 실패 (상태: ${response ? response.status : '응답 없음'})`};
             })
             .then(result => {
-                if(result) { 
-                    console.log('Google Sheet 저장 결과:', result);
-                }
+                console.log('Google Sheet 저장 시도 결과:', result);
             })
             .catch((error) => {
-                console.error('Google Sheet로 데이터 전송 중 오류 발생:', error);
+                console.error('Google Sheet로 데이터 전송 중 네트워크 또는 기타 오류 발생:', error);
             });
         }
 
@@ -586,7 +580,7 @@
             let fileContent = `에고그램 검사 결과\n`;
             fileContent += `-------------------------------------\n`;
             fileContent += `이름: ${userName || '입력 안 함'}\n`;
-            fileContent += `검사일시: ${now.toLocaleString('ko-KR')}\n`;
+            fileContent += `검사일시: ${now.toLocaleString('ko-KR')}\n`; 
             fileContent += `-------------------------------------\n`;
             fileContent += `CP (비판적 부모): ${scores.CP}점\n`;
             fileContent += `NP (양육적 부모): ${scores.NP}점\n`;
@@ -622,7 +616,7 @@
 
         function resetTest() {
             currentQuestionIndex = 0;
-            userAnswers = []; // 답변 기록 초기화
+            userAnswers = new Array(TOTAL_QUESTIONS).fill(undefined); 
             scores = { CP: 0, NP: 0, A: 0, FC: 0, AC: 0 };
             if (egogramChartInstance) {
                 egogramChartInstance.destroy();
@@ -651,13 +645,13 @@
 
             if (buttons.startTest) buttons.startTest.addEventListener('click', () => {
                 currentQuestionIndex = 0; 
-                userAnswers = new Array(TOTAL_QUESTIONS).fill(undefined); // 답변 배열 초기화
+                userAnswers = new Array(TOTAL_QUESTIONS).fill(undefined); 
                 initializeTestState(); 
                 loadQuestion();
                 showScreen('test');
             });
             
-            if (buttons.prevQuestion) buttons.prevQuestion.addEventListener('click', handlePrevQuestion); // 이전 문항 버튼 이벤트
+            if (buttons.prevQuestion) buttons.prevQuestion.addEventListener('click', handlePrevQuestion); 
             if (buttons.nextQuestion) buttons.nextQuestion.addEventListener('click', handleNextQuestion);
             if (buttons.showInterpretation) buttons.showInterpretation.addEventListener('click', generateInterpretation);
             if (buttons.saveResults) buttons.saveResults.addEventListener('click', saveResultsToFile);
